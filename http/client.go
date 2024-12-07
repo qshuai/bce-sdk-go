@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"os"
 	"sync"
@@ -100,13 +101,26 @@ func InitClient(config ClientConfig) {
 	})
 }
 
+var (
+	connTrace = &httptrace.ClientTrace{
+		GotConn: func(info httptrace.GotConnInfo) {
+			if info.Reused {
+				fmt.Fprint(os.Stderr, "reused")
+			} else {
+				fmt.Fprint(os.Stderr, "new")
+			}
+		},
+	}
+)
+
 // Execute - do the http requset and get the response
 //
 // PARAMS:
-//     - request: the http request instance to be sent
+//   - request: the http request instance to be sent
+//
 // RETURNS:
-//     - response: the http response returned from the server
-//     - error: nil if ok otherwise the specific error
+//   - response: the http response returned from the server
+//   - error: nil if ok otherwise the specific error
 func Execute(request *Request) (*Response, error) {
 	// Build the request object for the current requesting
 	httpRequest := &http.Request{
@@ -154,6 +168,8 @@ func Execute(request *Request) (*Response, error) {
 			return url.Parse(request.ProxyUrl())
 		}
 	}
+
+	httpRequest = httpRequest.WithContext(httptrace.WithClientTrace(httpRequest.Context(), connTrace))
 
 	// Perform the http request and get response
 	// It needs to explicitly close the keep-alive connections when error occurs for the request
