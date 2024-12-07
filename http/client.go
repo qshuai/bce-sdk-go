@@ -165,10 +165,6 @@ func Execute(request *Request) (*Response, error) {
 		transport.CloseIdleConnections()
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 &&
-		(httpRequest.Method == PUT || httpRequest.Method == POST) {
-		transport.CloseIdleConnections()
-	}
 	response := &Response{httpResponse, end.Sub(start)}
 	return response, nil
 }
