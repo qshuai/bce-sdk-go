@@ -20,9 +20,11 @@
 package http
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -162,6 +164,7 @@ func Execute(request *Request) (*Response, error) {
 
 	end := time.Now()
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "bos request err: %v", err)
 		transport.CloseIdleConnections()
 		return nil, err
 	}
